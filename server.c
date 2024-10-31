@@ -16,6 +16,7 @@
 void error(const char *error_message)
 {
     fprintf(stderr, "%s", error_message);
+    fflush(stdout);
     exit(EXIT_FAILURE);
 }
 
@@ -36,14 +37,31 @@ int main(int argc, char *argv[])
     fd_set master_set;
     fd_set read_fds;
     char buffer[BUFFER_SIZE];
-    struct sockaddr_in cli_addr;
+    struct sockaddr_in server_address;
     socklen_t client_len;
 
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
-
     if (sockfd < 0)
     {
         error("Error opening socket.\n");
+    }
+
+        // Set up the server address
+    bzero(&server_address, sizeof(server_address));
+    server_address.sin_family = AF_INET;
+    server_address.sin_addr.s_addr = INADDR_ANY;
+    server_address.sin_port = htons(atoi(argv[1]));
+
+    // Bind the socket to the specified port
+    if (bind(sockfd, (struct sockaddr *)&server_address, sizeof(server_address)) < 0)
+    {
+        error("Error binding socket.\n");
+    }
+
+    // Start listening for connections
+    if (listen(sockfd, NUMBER_OF_POSSIBLE_CLIENTS_THAT_CAN_CONNECT) < 0)
+    {
+        error("Error listening on socket.\n");
     }
 
     FD_ZERO(&master_set);
@@ -51,6 +69,9 @@ int main(int argc, char *argv[])
 
     FD_SET(sockfd, &master_set);
     fd_max = sockfd;
+
+    printf("Server running on port %s", PORT_NUMBBER);
+    fflush(stdout);
 
     while (ALWAYS)
     {
@@ -65,8 +86,8 @@ int main(int argc, char *argv[])
             { // We found a valid connection
                 if (i == sockfd)
                 { // New connection
-                    client_len = sizeof(cli_addr);
-                    newsocfd = accept(sockfd, (struct sockaddr *)&cli_addr, &client_len);
+                    client_len = sizeof(client_len);
+                    newsocfd = accept(sockfd, (struct sockaddr *)&server_address, &client_len);
                     if (newsocfd < 0)
                         error("Error accepting new connection, terminating.\n");
                     else
@@ -74,7 +95,8 @@ int main(int argc, char *argv[])
                         FD_SET(newsocfd, &master_set); // Add new connection FD to master set.
                         if (newsocfd > fd_max)
                             fd_max = newsocfd;
-                        printf("New connection from %s on socket %d\n", inet_ntoa(cli_addr.sin_addr), newsocfd);
+                        printf("New connection from %s on socket %d\n", inet_ntoa(server_address.sin_addr), newsocfd);
+                        fflush(stdout);
                     }
                 }
             }
@@ -84,9 +106,10 @@ int main(int argc, char *argv[])
                 int nbytes = read(i, buffer, sizeof(buffer));
                 if (nbytes <= 0)
                 { // Connection closed.
-                    if (nbytes == 0)
+                    if (nbytes == 0) {
                         printf("Socket %d closed.\n", i);
-                    else
+                        fflush(stdout);
+                    } else
                         perror("recv");
                     close(i);
                     FD_CLR(i, &master_set); // Remove socket from master set

@@ -17,6 +17,7 @@
 
 void error(const char *error_message) {
     fprintf(stderr, "%s", error_message);
+    fflush(stdout);
     exit(EXIT_FAILURE);
 }
 
@@ -35,7 +36,7 @@ int main(int argc, char *argv[]) {
     fd_set master_set;
     fd_set read_fds;
 
-    if (argc < 4) error("Error, expecting: ./server [IP address] [PORT NUMBER] [CLIENT NAME]\nTerminating.\n");
+    if (argc < 4) error("Error, expecting: ./client [IP address] [PORT NUMBER] [CLIENT NAME]\nTerminating.\n");
     
     port_number = atoi(argv[2]);
 
@@ -72,6 +73,8 @@ int main(int argc, char *argv[]) {
     fd_max = sockdf;
 
     printf("Connected to server, you can now start sending messages.\n");
+    fflush(stdout);
+
 
 
     while (ALWAYS) {
@@ -94,11 +97,13 @@ int main(int argc, char *argv[]) {
 
                 if (strncmp("exit chat room", buffer, strlen("exit chat room") == 0)) {
                     printf("Exiting chat.\n");
+                    fflush(stdout);
                     break;
                 }
             } else {
                 // EOF reached
                 printf("EOF on stdin, exiting.\n");
+                fflush(stdout);
                 break;
             }
         }
@@ -114,6 +119,7 @@ int main(int argc, char *argv[]) {
             } else {
                 buffer[check] = '\0';
                 printf("%s\n", buffer);
+                fflush(stdout);
             }
         } 
     }
