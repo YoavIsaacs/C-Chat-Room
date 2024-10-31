@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
         if (check < 0) {
             error("Error reading from client, terminating.\n");
         }
-        printf("Client: %s\n", buffer);
+        printf("%s\n", buffer);
         bzero(buffer, BUFFER_SIZE);
         fgets(buffer, BUFFER_SIZE, stdin);
 
