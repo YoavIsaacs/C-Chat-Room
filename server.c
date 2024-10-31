@@ -9,6 +9,7 @@
 #define PORT_NUMBBER argv[1]
 #define NUMBER_OF_POSSIBLE_CLIENTS_THAT_CAN_CONNECT 5
 #define ALWAYS 1
+#define BUFFER_SIZE 1024
 
 
 void error(const char *error_message) {
@@ -29,7 +30,7 @@ int main(int argc, char *argv[]) {
     int check;
     int exit_check;
 
-    char buffer[1024];
+    char buffer[BUFFER_SIZE];
 
     struct sockaddr_in server_addr, cli_addr;
 
@@ -62,21 +63,21 @@ int main(int argc, char *argv[]) {
     }
 
     while (ALWAYS) {
-        bzero(buffer, 1024);
-        check = read(newsocfd, buffer, 1024);
+        bzero(buffer, BUFFER_SIZE);
+        check = read(newsocfd, buffer, BUFFER_SIZE);
         if (check < 0) {
             error("Error reading from client, terminating.\n");
         }
         printf("Client: %s\n", buffer);
-        bzero(buffer, 1024);
-        fgets(buffer, 1024, stdin);
+        bzero(buffer, BUFFER_SIZE);
+        fgets(buffer, BUFFER_SIZE, stdin);
 
         check = write(newsocfd, buffer, strlen(buffer));
         if (check < 0) {
             error("Error sending message, terminating.\n");
         }
 
-        exit_check = strncmp("Bye", buffer, 3);
+        exit_check = strncmp("Bye", buffer, strlen("Bye"));
         if (exit_check == 0) break;
     }
 
